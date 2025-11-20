@@ -7,6 +7,6 @@
 
 Press **F10** to set the Global Cash Multiplier (or the Hotkey you decided).
 
-Credits to [@GMFelixfex](https://github.com/GMFelixfex) for making the orignial mod 3 years ago.
+Credits to [@GMFelixfex](https://github.com/GMFelixfex) for making the original mod 3 years ago.
 
 [![Requires BTD6 Mod Helper](https://raw.githubusercontent.com/gurrenm3/BTD-Mod-Helper/master/banner.png)](https://github.com/gurrenm3/BTD-Mod-Helper#readme)
