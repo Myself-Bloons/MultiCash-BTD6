@@ -1,30 +1,23 @@
 global using BTD_Mod_Helper;
 global using System;
-using BTD_Mod_Helper.Api;
 using BTD_Mod_Helper.Api.Enums;
 using BTD_Mod_Helper.Api.ModOptions;
 using BTD_Mod_Helper.Extensions;
+using HarmonyLib;
 using Il2CppAssets.Scripts.Simulation;
 using Il2CppAssets.Scripts.Unity.UI_New.Popups;
 using Il2CppTMPro;
 using MelonLoader;
-using MultiCash;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(MultiCash.MultiCash), ModHelperData.Name, ModHelperData.Version, ModHelperData.RepoOwner)]
+[assembly: MelonInfo(typeof(MultiCash.MultiCash), MultiCash.ModHelperData.Name, MultiCash.ModHelperData.Version, MultiCash.ModHelperData.RepoOwner)]
 [assembly: MelonGame("Ninja Kiwi", "BloonsTD6")]
 
 namespace MultiCash;
 
 public class MultiCash : BloonsTD6Mod
 {
-    public override void OnApplicationStart()
-    {
-        ModHelper.Msg<MultiCash>("MultiCash loaded!");
-    }
-
     public static readonly ModSettingHotkey OpenGUI = new(KeyCode.F10)
     {
         displayName = "Global Multiplier"
@@ -36,33 +29,6 @@ public class MultiCash : BloonsTD6Mod
     {
         collapsed = false
     };
-
-    public override void OnUpdate()
-    {
-        base.OnUpdate();
-
-        if (OpenGUI.JustPressed())
-        {
-            PopupScreen.instance.ShowSetNamePopup(
-                "Global Cash Multiplier",
-                "Enter multiplier (1 = 1x, 1.5 = 1.5x, 2 = 2x, etc.)",
-                new Action<string>(value =>
-                {
-                    if (double.TryParse(value, out double multiplier))
-                    {
-                        GlobalMultiplier.SetValue(Math.Clamp(multiplier, 0.01, 100.0));
-                    }
-                }),
-                ((double)GlobalMultiplier).ToString()
-            );
-
-            PopupScreen.instance.ModifyField(field =>
-            {
-                field.characterValidation = TMP_InputField.CharacterValidation.Decimal;
-                field.characterLimit = 10;
-            });
-        }
-    }
 
     public static readonly ModSettingDouble PopMultiplier = new(1.0)
     {
@@ -200,11 +166,35 @@ public class MultiCash : BloonsTD6Mod
         { Simulation.CashSource.CorvusNourishment, CorvusMultiplier }
     };
 
-    [HarmonyLib.HarmonyPatch(typeof(Simulation), nameof(Simulation.AddCash))]
-    internal static class AddCash_Patch
+    public override void OnUpdate()
     {
-        [HarmonyLib.HarmonyPrefix]
-        private static void Prefix(ref double c, Simulation.CashSource source)
+        if (!OpenGUI.JustPressed()) return;
+
+        PopupScreen.instance.ShowSetNamePopup(
+            "Global Cash Multiplier",
+            "Enter multiplier (1 = 1x, 1.5 = 1.5x, 2 = 2x, etc.)",
+            new Action<string>(value =>
+            {
+                if (double.TryParse(value, out var multiplier))
+                {
+                    GlobalMultiplier.SetValue(Math.Clamp(multiplier, 0.01, 100.0));
+                }
+            }),
+            ((double)GlobalMultiplier).ToString()
+        );
+
+        PopupScreen.instance.ModifyField(field =>
+        {
+            field.characterValidation = TMP_InputField.CharacterValidation.Decimal;
+            field.characterLimit = 10;
+        });
+    }
+
+    [HarmonyPatch(typeof(Simulation), nameof(Simulation.AddCash))]
+    internal static class Simulation_AddCash
+    {
+        [HarmonyPrefix]
+        internal static void Prefix(ref double c, Simulation.CashSource source)
         {
             if (Multipliers.TryGetValue(source, out var multiplier))
             {
